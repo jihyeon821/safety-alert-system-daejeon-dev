@@ -6,8 +6,8 @@ from langgraph.graph import StateGraph,START,END
 from typing import Annotated, Optional 
 from typing_extensions import TypedDict
 import pandas as pd
-from langgraph.checkpoint.memory import MemorySaver
 import os # 파일 경로 확인용
+import threading
 from io import StringIO # StringIO 추가 (FutureWarning 제거용)
 
 # === Graph State 정의 ====
@@ -129,8 +129,9 @@ class BertLlm:
         graph.add_edge("node_mode_analysis","node_summary_report")
         graph.add_edge("node_summary_report", END)
 
-        memory = MemorySaver()
-        app = graph.compile(checkpointer=memory)
+        # No checkpointer: the analyzer instance is reused across requests, and a
+        # MemorySaver would keep every request's state (utterance data) in memory forever.
+        app = graph.compile()
         return app
 
     # --- 노드 함수들 ---
@@ -283,21 +284,40 @@ class BertLlm:
             convert_dates=['발화시간'] 
         )
 
-# 실행 함수 
+# === 모델 1회 로드 (프로세스당 하나의 인스턴스 재사용) ===
+_analyzer: Optional[BertLlm] = None
+_analyzer_key: Optional[tuple] = None
+_load_lock = threading.Lock()
+# llama.cpp is not thread-safe and FastAPI runs sync endpoints in a thread pool,
+# so analyses run one at a time on the shared instance.
+_run_lock = threading.Lock()
+
+
+def get_analyzer(bert_path: str, bert_weights: str, llm_path: str) -> BertLlm:
+    """Return the shared BertLlm, loading models only on first use (or if paths change).
+
+    If loading fails, nothing is cached and the next call retries.
+    """
+    global _analyzer, _analyzer_key
+    key = (bert_path, bert_weights, llm_path)
+    with _load_lock:
+        if _analyzer is None or _analyzer_key != key:
+            _analyzer = BertLlm(bert_path=bert_path, bert_weights=bert_weights, llm_path=llm_path)
+            _analyzer_key = key
+        return _analyzer
+
+
+# 실행 함수
 def main(BERT_LOCAL_PATH,BERT_WEIGHTS_PATH,LLM_GGUF_PATH,INPUT_EXCEL_PATH,doll_id):
-    # 1. 클래스 인스턴스 생성
-    analyzer = BertLlm(
-        bert_path=BERT_LOCAL_PATH,
-        bert_weights=BERT_WEIGHTS_PATH,
-        llm_path=LLM_GGUF_PATH
-    )
-    
-    # 2. 분석 실행 
-    final_state = analyzer.run_analysis(
-        file_path=INPUT_EXCEL_PATH, 
-        doll_id=doll_id,
-        thread_id="test_run_01"
-    )
+    # 1. 공유 인스턴스 가져오기 (최초 1회만 모델 로드)
+    analyzer = get_analyzer(BERT_LOCAL_PATH, BERT_WEIGHTS_PATH, LLM_GGUF_PATH)
+
+    # 2. 분석 실행
+    with _run_lock:
+        final_state = analyzer.run_analysis(
+            file_path=INPUT_EXCEL_PATH,
+            doll_id=doll_id,
+        )
     
     # 3. 결과 확인 
     # 3-1. 개별 분석 결과 (DataFrame) 추출

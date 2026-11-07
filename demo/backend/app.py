@@ -1,14 +1,36 @@
+from contextlib import asynccontextmanager
+import os
+
 from fastapi import FastAPI
 from pydantic import BaseModel
-from bert_llm import main
+from bert_llm import main, get_analyzer
 from fastapi.middleware.cors import CORSMiddleware  # CORS 미들웨어를 임포트합니다
-import httpx 
+import httpx
 from pathlib import Path
 
 '''n8n은 별도 워크플로우 생성'''
 N8N_WEBHOOK_URL = "http://localhost:5678/webhook/tauri" # n8n Webhook 주소
 
-app = FastAPI()
+# 모델 경로 (backend 폴더 기준) — '''해당 부분 모델 기입 필요'''
+BACKEND_DIR = Path(__file__).resolve().parent
+BERT_LOCAL_PATH = str(BACKEND_DIR / "kcbert_local")
+BERT_WEIGHTS_PATH = str(BACKEND_DIR / "best_kcbert_model.pt")
+LLM_GGUF_PATH = str(BACKEND_DIR / "gemma-3-1B-it-QAT-Q4_0.gguf")
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    # Load models once at startup so the first request isn't slow.
+    # Set PRELOAD_MODELS=0 to skip (models then load lazily on the first /predict).
+    if os.getenv("PRELOAD_MODELS", "1") != "0":
+        try:
+            get_analyzer(BERT_LOCAL_PATH, BERT_WEIGHTS_PATH, LLM_GGUF_PATH)
+        except Exception as e:
+            print(f"[startup] 모델 사전 로드 실패, 첫 /predict 요청 때 다시 시도합니다: {type(e).__name__}: {e}")
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # 3. 모든 출처(Origin)를 허용합니다. (개발용)
@@ -31,24 +53,6 @@ def root():
 # POST 예시 엔드포인트
 @app.post("/predict")
 def predict(data: InputData):
-
-
-    # 1. 이 파일(bert_llm.py)의 절대 경로를 가져옵니다.
-    SCRIPT_PATH = Path(__file__).resolve()
-
-    # 2. 이 파일이 속한 폴더(backend)를 가져옵니다.
-    BACKEND_DIR = SCRIPT_PATH.parent
-
-    # 3. 'backend' 폴더의 부모 폴더(프로젝트 루트)를 가져옵니다.
-    PROJECT_ROOT = BACKEND_DIR.parent
-    print(PROJECT_ROOT)
-
-    # 4. 프로젝트 루트를 기준으로 경로 설정
-    '''해당 부분 모델 기입 필요'''
-    BERT_LOCAL_PATH = str(PROJECT_ROOT / "backend"/"kcbert_local")
-    BERT_WEIGHTS_PATH = str(PROJECT_ROOT / "backend"/"best_kcbert_model.pt")
-    LLM_GGUF_PATH = str(PROJECT_ROOT / "backend"/"gemma-3-1B-it-QAT-Q4_0.gguf")
-
     # 분석할 실제 엑셀 파일 경로 (이것도 루트 기준이 좋습니다)
     INPUT_EXCEL_PATH = data.file_path 
     DOLL_ID = data.doll_id

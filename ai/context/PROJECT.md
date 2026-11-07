@@ -20,7 +20,7 @@
 [Tauri UI] 엑셀 파일 선택 + doll_id 입력
    │ POST /predict {file_path, doll_id, kakao_message}
    ▼
-[FastAPI] main() → BertLlm (LangGraph)
+[FastAPI] main() → 공유 BertLlm (서버 시작 시 1회 로드, 분석은 lock으로 1건씩) → LangGraph
    node_file_analysis   : pd.read_excel → doll_id 필터 → 10분 이내 발화 턴 병합
    node_mode_analysis   : KCBERT 분류 (positive/danger/critical/emergency) + Gemma 근거 생성
    node_summary_report  : 요약 보고서 생성
@@ -37,6 +37,11 @@
 - `POST /predict` 응답: `{"predicted_value": <dict 또는 오류 문자열>, "summary1": <str>}`
 - `POST /run-workflow` 응답: `{"status": "n8n 호출 성공"|"n8n 호출 실패", ...}`. 프론트는 이 **한국어 문자열을 그대로 비교**합니다.
 - 계약을 바꿀 때는 `demo/src/main.js`와 `demo/backend/app.py`를 **같은 작업에서** 함께 고칩니다. `harness check`의 `api-contract` 검사가 경로 불일치를 잡습니다.
+
+## 4-1. 모델 로딩
+- `bert_llm.get_analyzer()`가 프로세스당 `BertLlm` 하나를 캐시합니다. `app.py`의 `lifespan`이 시작할 때 미리 로드하고, `PRELOAD_MODELS=0`이면 첫 요청 때 로드합니다. 로드에 실패하면 캐시하지 않고 다음 요청에서 다시 시도합니다.
+- llama.cpp는 스레드 안전하지 않아서 `_run_lock`으로 분석을 한 번에 하나씩 실행합니다. 동시 요청은 순서대로 처리됩니다.
+- 그래프는 checkpointer 없이 컴파일합니다. 요청 상태(발화 데이터)를 메모리에 남기지 않습니다.
 
 ## 5. 도메인 규칙
 - 위험 등급 라벨은 4개이고 순서가 고정입니다: `positive` < `danger` < `critical` < `emergency`. KCBERT `num_labels=4`

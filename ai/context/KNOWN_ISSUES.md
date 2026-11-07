@@ -4,7 +4,7 @@
 > 심각도: **H** 동작 실패나 데이터 위험 / **M** 잘못된 동작 / **L** 품질·정리
 
 - [x] **H** `requirements.txt:23` `nbforma==4.2.0`: 존재하지 않는 패키지입니다(`nbformat`의 오타로 보임). `pip install -r requirements.txt`가 여기서 실패합니다. → harness `requirements` 검사가 잡습니다. → `nbformat==5.11.1`로 수정 (task 0002)
-- [ ] **H** `demo/backend/app.py` `/predict`: 요청이 올 때마다 `main()`이 KCBERT와 Gemma를 **새로 로드**합니다. 매 요청마다 수 초~수십 초가 걸리고 메모리 사용이 큽니다. 앱 시작 시 한 번만 로드하도록 바꿔야 합니다.
+- [x] **H** `demo/backend/app.py` `/predict`: 요청이 올 때마다 `main()`이 KCBERT와 Gemma를 **새로 로드**합니다. 매 요청마다 수 초~수십 초가 걸리고 메모리 사용이 큽니다. 앱 시작 시 한 번만 로드하도록 바꿔야 합니다. → 서버 시작 시 1회 로드 + 공유 인스턴스로 수정 (task 0003)
 - [ ] **H** `demo/backend/app.py` `/predict`: 맨 `except:`가 모든 예외를 삼키고 HTTP 200으로 `'오류가 발생했습니다'`를 돌려줍니다. 프론트는 `predicted_value`가 문자열이어도 성공으로 처리하고 표를 그리려 합니다. 적절한 HTTP 오류 코드와 메시지가 필요합니다.
 - [ ] **H** `demo/backend/bert_llm.py` `node_mode_analysis`: `self.tokenizer(text, return_tensors="pt")`에 `truncation=True, max_length=300`이 없습니다. 병합한 대화 턴이 KCBERT 최대 길이(300 토큰)를 넘으면 예외가 나고, 위의 `except:`에 묻혀 "오류가 발생했습니다"만 보입니다.
 - [ ] **M** `demo/backend/bert_llm.py` `node_file_analysis`: `groupby(["group", "min"])`이 각 턴의 첫 발화(`min=True`)와 나머지 발화(`min=False`)를 다른 그룹으로 나눕니다. 10분 이내 턴 병합이 의도대로 되지 않습니다(첫 그룹 제외). `groupby("group")`이어야 합니다. 정렬 없이 `diff()`를 쓰는 점도 확인이 필요합니다.
