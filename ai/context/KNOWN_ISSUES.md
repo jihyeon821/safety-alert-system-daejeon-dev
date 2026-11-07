@@ -14,3 +14,11 @@
 - [ ] **L** `README.md` 4.2: `scr_tauri` / `cargo clean` 줄이 잘못된 명령어입니다.
 - [ ] **L** `README.md`는 `/analyze` 엔드포인트를 언급하지만, 실제 엔드포인트는 `/predict`와 `/run-workflow`입니다.
 - [ ] **L** `demo/backend/app.py`: n8n URL이 하드코딩돼 있습니다. 환경변수(`N8N_WEBHOOK_URL`)로 빼는 게 좋습니다.
+
+## 요구사항 분석(task 0004)에서 추가로 찾은 문제
+- [ ] **H** `demo/src/main.js`: [입력] 버튼 클릭 핸들러 안에서 [분석실행] 클릭 리스너와 `setInterval(vis)`를 등록해서, [입력]을 누를 때마다 리스너가 하나씩 늘어납니다. 그러면 [분석실행] 1회 클릭에 /predict가 여러 번 호출됩니다. → task 0008
+- [ ] **H** `demo/backend/app.py:63,70,80`, `bert_llm.py:177,238,254`: 발화 원문, 분석 표, 보고서를 콘솔에 `print`합니다(개인정보 규칙 위반). → task 0011
+- [ ] **H** `notebooks/02`, `04`: 턴 병합 `groupby(["group","min"])` 결함이 노트북에도 있어서, 학습 라벨도 같은 방식으로 만들어졌습니다. 추론 코드만 고치면 학습과 서빙이 어긋납니다. → task 0007
+- [ ] **M** `demo/src/index.html`: Grid.js와 Pretendard를 CDN(unpkg, jsdelivr)에서 불러와서, 오프라인이면 결과 표가 렌더링되지 않습니다. → task 0016
+- [ ] **M** 모델 성능: emergency 재현율이 45.0%입니다(111건 중 50건). 목표값이 정해져 있지 않습니다. → task 0017
+- [ ] **L** `demo/backend/app.py` `/run-workflow`: n8n이 4xx·5xx로 응답해도 "n8n 호출 성공"을 반환합니다. → task 0013

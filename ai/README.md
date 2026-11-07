@@ -16,6 +16,8 @@ ai/
 │   └── standard-loop.md  # [일반] 기록 → 계획 → 구현 → 검증 → 리뷰 5단계
 ├── templates/
 │   └── task.md           # [일반] 작업 기록 양식
+├── tools/
+│   └── build_requirements.py  # [일반] requirements.json → 요구사항정의서.xlsx + 작업 파일
 └── tasks/                # 작업 기록 (NNNN-제목.md)
 ```
 루트의 `CLAUDE.md`가 이 폴더를 가리키기 때문에, Claude Code를 시작하면 자동으로 이 규칙을 따릅니다.
@@ -27,6 +29,7 @@ python ai/harness.py check --offline     # PyPI 확인 같은 네트워크 검�
 python ai/harness.py check --only secrets,api-contract
 python ai/harness.py sync-agents         # ai/agents → .claude/agents 복사
 python ai/harness.py new-task "제목"     # ai/tasks/NNNN-제목.md 생성
+python ai/tools/build_requirements.py docs/requirements.json docs/요구사항정의서.xlsx --sync-tasks
 ```
 
 ## 검사 종류 (`harness.json`의 `type`)
