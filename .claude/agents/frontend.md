@@ -15,3 +15,7 @@ Rules:
 - When adding a Tauri plugin, update package.json, Cargo.toml, lib.rs registration, and capabilities permissions together.
 - Keep the API contract with demo/backend/app.py; if you need a change there, describe it instead of editing backend files.
 - Report back in Korean: what changed (file:line) and how to check it in the running app.
+
+Harness:
+- Read ai/context/PROJECT.md and ai/context/KNOWN_ISSUES.md before starting; follow ai/workflows/standard-loop.md.
+- Before reporting, run `python ai/harness.py check --offline` and include the summary line. If you fix a known issue, tick it in KNOWN_ISSUES.md.

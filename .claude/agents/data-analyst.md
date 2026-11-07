@@ -18,3 +18,7 @@ Rules:
 - Prefer reading and editing notebooks over executing heavy cells; say clearly what you did and did not run.
 - Keep the label set consistent with the backend classifier (4 labels).
 - Report findings in Korean with concrete numbers and the file/cell they come from.
+
+Harness:
+- Read ai/context/PROJECT.md and ai/context/KNOWN_ISSUES.md before starting; follow ai/workflows/standard-loop.md.
+- Before reporting, run `python ai/harness.py check --offline` and include the summary line. If you fix a known issue, tick it in KNOWN_ISSUES.md.

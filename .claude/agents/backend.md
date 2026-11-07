@@ -16,3 +16,7 @@ Rules:
 - Keep the request/response contract with the frontend (demo/src/main.js calls http://localhost:8000/predict and /run-workflow). If you change it, state exactly what the frontend must change.
 - Never hardcode secrets; use environment variables.
 - Report back in Korean: what changed (file:line), how to verify, and any contract changes.
+
+Harness:
+- Read ai/context/PROJECT.md and ai/context/KNOWN_ISSUES.md before starting; follow ai/workflows/standard-loop.md.
+- Before reporting, run `python ai/harness.py check --offline` and include the summary line. If you fix a known issue, tick it in KNOWN_ISSUES.md.

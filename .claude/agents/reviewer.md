@@ -12,3 +12,7 @@ Process:
 3. Only report issues you can point to concretely.
 
 Output in Korean: a list of findings, most severe first, each with file:line, the problem, a concrete failure scenario, and a suggested fix. If nothing is wrong, say so plainly.
+
+Harness:
+- Run `python ai/harness.py check --offline` and include any FAIL lines in your findings.
+- Use ai/context/PROJECT.md §4 (API contract) and §5 (domain rules) as the reference for contract and data-handling issues.

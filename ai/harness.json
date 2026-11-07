@@ -1,0 +1,101 @@
+{
+  "project": {
+    "name": "safety-alert-system-daejeon",
+    "summary": "Daejeon Jung-gu elderly utterance risk classification (KCBERT) + explanation (Gemma) with a Tauri desktop app and n8n alerts",
+    "context_docs": ["ai/context/PROJECT.md", "ai/context/KNOWN_ISSUES.md"]
+  },
+  "paths": {
+    "agents_src": "ai/agents",
+    "agents_dst": ".claude/agents",
+    "tasks": "ai/tasks",
+    "task_template": "ai/templates/task.md"
+  },
+  "checks": [
+    {
+      "id": "forbidden-files",
+      "type": "forbidden_tracked",
+      "level": "error",
+      "patterns": [
+        "**/node_modules/**", "**/__pycache__/**", "*.pyc",
+        "*.pt", "*.pth", "*.gguf", "*.safetensors", "*.bin",
+        "**/src-tauri/target/**", "**/.venv/**",
+        ".env", "**/.env", "*.env.local",
+        "desktop.ini", "Thumbs.db"
+      ]
+    },
+    {
+      "id": "large-files",
+      "type": "max_file_size",
+      "level": "error",
+      "max_mb": 50,
+      "allow": []
+    },
+    {
+      "id": "secrets",
+      "type": "secret_scan",
+      "level": "error",
+      "globs": ["*"],
+      "exclude": ["*.png", "*.jpg", "*.ico", "*.icns", "*.pdf", "*.mp4", "package-lock.json", "Cargo.lock", "ai/harness.json"],
+      "patterns": [
+        "sk-[A-Za-z0-9_-]{20,}",
+        "gh[pousr]_[A-Za-z0-9]{30,}",
+        "hf_[A-Za-z0-9]{30,}",
+        "AKIA[0-9A-Z]{16}",
+        "AIza[0-9A-Za-z_-]{35}",
+        "-----BEGIN [A-Z ]*PRIVATE KEY-----",
+        "(?i)(api[_-]?key|secret|password|access[_-]?token)\\s*[=:]\\s*['\"][^'\"\\s]{12,}['\"]"
+      ]
+    },
+    {
+      "id": "python-syntax",
+      "type": "python_compile",
+      "level": "error",
+      "globs": ["demo/backend/*.py", "ai/*.py"]
+    },
+    {
+      "id": "json-valid",
+      "type": "json_valid",
+      "level": "error",
+      "globs": ["*.json", "*.ipynb"]
+    },
+    {
+      "id": "api-contract",
+      "type": "api_contract",
+      "level": "error",
+      "client_globs": ["demo/src/*.js", "demo/src/**/*.js", "demo/src/*.html"],
+      "client_regex": "['\"`]https?://(?:localhost|127\\.0\\.0\\.1):8000(/[^'\"`?\\s]*)",
+      "server_globs": ["demo/backend/*.py"],
+      "server_regex": "@app\\.(?:get|post|put|patch|delete)\\(\\s*['\"]([^'\"]+)['\"]"
+    },
+    {
+      "id": "requirements",
+      "type": "requirements",
+      "level": "error",
+      "files": ["requirements.txt"],
+      "require_pins": true,
+      "verify_on_pypi": true
+    },
+    {
+      "id": "agents-sync",
+      "type": "dir_sync",
+      "level": "error",
+      "src": "ai/agents",
+      "dst": ".claude/agents"
+    },
+    {
+      "id": "js-syntax",
+      "type": "command",
+      "level": "error",
+      "optional": true,
+      "cmd": ["node", "--check", "{file}"],
+      "globs": ["demo/src/*.js"]
+    },
+    {
+      "id": "rust-check",
+      "type": "command",
+      "level": "warn",
+      "optional": true,
+      "cmd": ["cargo", "check", "--quiet", "--manifest-path", "demo/src-tauri/Cargo.toml"]
+    }
+  ]
+}
