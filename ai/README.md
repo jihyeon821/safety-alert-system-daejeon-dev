@@ -29,7 +29,7 @@ python ai/harness.py check --offline     # PyPI 확인 같은 네트워크 검�
 python ai/harness.py check --only secrets,api-contract
 python ai/harness.py sync-agents         # ai/agents → .claude/agents 복사
 python ai/harness.py new-task "제목"     # ai/tasks/NNNN-제목.md 생성
-python ai/tools/build_requirements.py docs/requirements.json docs/요구사항정의서.xlsx --sync-tasks
+python ai/tools/build_requirements.py docs/요구사항/requirements.json docs/요구사항/요구사항정의서.xlsx --sync-tasks
 ```
 
 ## 검사 종류 (`harness.json`의 `type`)

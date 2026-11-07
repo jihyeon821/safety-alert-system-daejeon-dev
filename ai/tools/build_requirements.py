@@ -4,7 +4,7 @@
 Reusable: point it at another project's requirements.json with the same schema.
 
 Usage:
-    python ai/tools/build_requirements.py docs/requirements.json docs/요구사항정의서.xlsx [--sync-tasks]
+    python ai/tools/build_requirements.py docs/요구사항/requirements.json docs/요구사항/요구사항정의서.xlsx [--sync-tasks]
 
 --sync-tasks creates ai/tasks/NNNN-*.md for every task in the JSON that has no file yet.
 Requires openpyxl.
@@ -78,7 +78,7 @@ def status_colors(ws, col_letter: str, first: int, last: int, values: list[str])
     rng = f"{col_letter}{first}:{col_letter}{last}"
     for v in values:
         ws.conditional_formatting.add(rng, FormulaRule(
-            formula=[f'${col_letter}{first}="{v}"'], fill=PatternFill("solid", fgColor=STATUS_FILL[v])))
+            formula=[f'${col_letter}{first}="{v}"'], fill=PatternFill(fill_type="solid", start_color=STATUS_FILL[v], end_color=STATUS_FILL[v])))
 
 
 def dropdown(ws, col_letter: str, first: int, last: int, values: list[str]) -> None:
@@ -119,7 +119,7 @@ def sheet_cover(wb: Workbook, spec: dict) -> None:
               ("우선순위", "상: 안전·동작에 직결 / 중: 기능 품질 / 하: 개선"),
               ("구현 상태", "구현완료 / 부분구현 / 미구현 / 결함(구현은 됐지만 요구대로 동작하지 않음)"),
               ("작업 상태", "완료 / 대기 / 진행중 / 보류(의사결정 필요)"),
-              ("편집 방법", "'요구사항 목록'·'작업 목록'의 우선순위·상태 열은 드롭다운으로 수정합니다. 요약 시트는 수식이라 자동으로 갱신됩니다. 원본 데이터는 docs/requirements.json이고, 다시 생성하면 덮어씁니다."),
+              ("편집 방법", "'요구사항 목록'·'작업 목록'의 우선순위·상태 열은 드롭다운으로 수정합니다. 요약 시트는 수식이라 자동으로 갱신됩니다. 원본 데이터는 docs/요구사항/requirements.json이고, 다시 생성하면 덮어씁니다."),
               ("글자색", "파란색 = 직접 입력한 값(원본 CSV 등) / 초록색 = 다른 시트 참조 / 노란 배경 = 확정이 필요한 가정값")]
     for i, (k, v) in enumerate(legend, r + 1):
         body_cell(ws, i, 1, k, F_BOLD)
@@ -291,9 +291,9 @@ def sheet_performance(wb: Workbook, spec: dict) -> None:
         body_cell(ws, i, 5, f'=IF(B{i}>=C{i},"달성","미달")', F_BOLD, CENTER)
         body_cell(ws, i, 6, req, F_BASE, CENTER)
     ws.conditional_formatting.add(f"E{g0 + 2}:E{g0 + 3}", FormulaRule(
-        formula=[f'$E{g0 + 2}="미달"'], fill=PatternFill("solid", fgColor=STATUS_FILL["결함"])))
+        formula=[f'$E{g0 + 2}="미달"'], fill=PatternFill(fill_type="solid", start_color=STATUS_FILL["결함"], end_color=STATUS_FILL["결함"])))
     ws.conditional_formatting.add(f"E{g0 + 2}:E{g0 + 3}", FormulaRule(
-        formula=[f'$E{g0 + 2}="달성"'], fill=PatternFill("solid", fgColor=STATUS_FILL["구현완료"])))
+        formula=[f'$E{g0 + 2}="달성"'], fill=PatternFill(fill_type="solid", start_color=STATUS_FILL["구현완료"], end_color=STATUS_FILL["구현완료"])))
     note = ws.cell(row=g0 + 4, column=1, value="※ 노란 칸의 목표값은 제안값(가정)입니다. 확정하면 판정이 자동으로 바뀝니다.")
     note.font = F_NOTE
 
